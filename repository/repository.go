@@ -180,3 +180,9 @@ func (r *AbstractRepository[T]) getMeta(total int64, count int, limit int, page 
 }
 
 
+func (r *AbstractRepository[T]) WithTransaction(ctx context.Context, fn func(txRepo *AbstractRepository[T]) error) error {
+	return r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		txRepo := NewAbstractRepository[T](tx)
+		return fn(txRepo)
+	})
+}
