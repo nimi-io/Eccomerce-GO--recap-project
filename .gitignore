@@ -1,0 +1,6 @@
+.idea/
+.qodo/
+.env
+gin_access.log
+docs/
+tmp/
