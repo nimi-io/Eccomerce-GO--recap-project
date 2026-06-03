@@ -1,4 +1,4 @@
-package controller
+package controllers
 
 import (
 	"Eccomerce-GO--recap-project-/services"

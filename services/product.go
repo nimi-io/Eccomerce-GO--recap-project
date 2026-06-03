@@ -23,6 +23,15 @@ func (s *ProductService) GetProductByName(ctx context.Context, name string) (*mo
 	return s.productRepo.FindByName(ctx, name)
 }
 
+func (s *ProductService) GetProductById(ctx context.Context, id string) (*models.Product, error) {
+	productID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.productRepo.FindByID(ctx, productID)
+}
+
 
 type CreateProductInput struct {
 	Name        string  `json:"name" binding:"required"`
