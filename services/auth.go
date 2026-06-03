@@ -37,6 +37,7 @@ type AuthResponse struct {
 		Email string `json:"email"`
 	} `json:"user"`
 	AccessToken string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func (s *AuthService) SignUp(ctx context.Context, input *SignUpInput) (*AuthResponse, error) {
@@ -97,6 +98,11 @@ func (s *AuthService) SignUp(ctx context.Context, input *SignUpInput) (*AuthResp
 		return nil, errors.New("failed to generate access token")
 	}
 
+	refreshToken, err := utils.GenerateToken(createdUser,"refresh")
+	if err != nil {
+		return nil, errors.New("failed to generate refresh token")
+	}
+
 	return &AuthResponse{
 		User: struct {
 			ID    string `json:"id"`
@@ -108,6 +114,7 @@ func (s *AuthService) SignUp(ctx context.Context, input *SignUpInput) (*AuthResp
 			Email: createdUser.Email,
 		},
 		AccessToken: accessToken,
+		RefreshToken: refreshToken,
 	}, nil
 }
 
