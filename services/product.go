@@ -1,10 +1,12 @@
 package services
 
 import (
-	"Eccomerce-GO--recap-project-/models"
-	"Eccomerce-GO--recap-project-/repository"
 	"context"
 	"time"
+
+	"Eccomerce-GO--recap-project-/models"
+	"Eccomerce-GO--recap-project-/repository"
+	"Eccomerce-GO--recap-project-/utils"
 
 	"github.com/google/uuid"
 )
@@ -42,7 +44,13 @@ type CreateProductInput struct {
 
 
 func (s *ProductService) CreateProduct(ctx context.Context, input *CreateProductInput) (*models.Product, error) {
-	//validate json
+	if ctx == nil {
+		return nil, utils.ValidationError("request context cannot be nil")
+	}
+	if input == nil {
+		return nil, utils.ValidationError("create product input cannot be nil")
+	}
+
 	product := &models.Product{
 		Name:        input.Name,
 		Description: input.Description,
@@ -54,7 +62,12 @@ func (s *ProductService) CreateProduct(ctx context.Context, input *CreateProduct
 		},
 	}
 
-	return s.productRepo.Create(ctx, product)
+	result, err := s.productRepo.Create(ctx, product)
+	if err != nil {
+		return nil, utils.DatabaseError()
+	}
+
+	return result, nil
 }
 
 type UpdateProductInput struct {
@@ -62,12 +75,19 @@ type UpdateProductInput struct {
 	Description *string  `json:"description,omitempty"`
 	Price       *float64 `json:"price,omitempty"`
 }
-func (c *ProductService) UpdateProduct(ctx context.Context, id uuid.UUID, input *UpdateProductInput) (*models.Product, error) {
-	product, err := c.productRepo.FindByID(ctx, id)
-	if err != nil {
-		return nil, err
+func (s *ProductService) UpdateProduct(ctx context.Context, id uuid.UUID, input *UpdateProductInput) (*models.Product, error) {
+	if ctx == nil {
+		return nil, utils.ValidationError("request context cannot be nil")
 	}
-	
+	if input == nil {
+		return nil, utils.ValidationError("update product input cannot be nil")
+	}
+
+	product, err := s.productRepo.FindByID(ctx, id)
+	if err != nil {
+		return nil, utils.NewError(utils.ErrUserNotFound, "Product not found", 404)
+	}
+
 	if input.Name != nil {
 		product.Name = *input.Name
 	}
@@ -82,5 +102,26 @@ func (c *ProductService) UpdateProduct(ctx context.Context, id uuid.UUID, input 
 
 	product.UpdatedAt = time.Now()
 
-	return c.productRepo.Update(ctx, product.ID,product)
+	return s.productRepo.Update(ctx, product.ID, product)
+}
+
+func (s *ProductService) GetAllProducts(ctx context.Context, opts *utils.PaginateOptions) (*utils.PaginateResult[models.Product], error) {
+	if ctx == nil {
+		return nil, utils.ValidationError("request context cannot be nil")
+	}
+
+	result, err := s.productRepo.FindAndPaginate(ctx, nil, opts, "")
+	if err != nil {
+		return nil, utils.DatabaseError()
+	}
+
+	return result, nil
+}
+
+func (s *ProductService) DeleteProduct(ctx context.Context, id uuid.UUID) error {
+	if ctx == nil {
+		return utils.ValidationError("request context cannot be nil")
+	}
+
+	return s.productRepo.Delete(ctx, id)
 }
