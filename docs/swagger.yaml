@@ -1,0 +1,787 @@
+basePath: /api/v1
+definitions:
+  models.Address:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      postalCode:
+        type: string
+      state:
+        type: string
+      street:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      userID:
+        type: string
+    type: object
+  models.Cart:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      product:
+        $ref: '#/definitions/models.Product'
+      productID:
+        type: string
+      quantity:
+        type: integer
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      userID:
+        type: string
+    type: object
+  models.Product:
+    properties:
+      carts:
+        items:
+          $ref: '#/definitions/models.Cart'
+        type: array
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      stock:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.User:
+    properties:
+      addresses:
+        items:
+          $ref: '#/definitions/models.Address'
+        type: array
+      carts:
+        items:
+          $ref: '#/definitions/models.Cart'
+        type: array
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  services.AddToCartInput:
+    properties:
+      product_id:
+        type: string
+      quantity:
+        minimum: 1
+        type: integer
+    required:
+    - product_id
+    - quantity
+    type: object
+  services.AuthResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        properties:
+          email:
+            type: string
+          id:
+            type: string
+          name:
+            type: string
+        type: object
+    type: object
+  services.CreateAddressInput:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      postal_code:
+        type: string
+      state:
+        type: string
+      street:
+        type: string
+    required:
+    - city
+    - country
+    - postal_code
+    - state
+    - street
+    type: object
+  services.CreateProductInput:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+    required:
+    - description
+    - name
+    - price
+    type: object
+  services.SignInInput:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  services.SignInResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        properties:
+          email:
+            type: string
+          id:
+            type: string
+          name:
+            type: string
+        type: object
+    type: object
+  services.SignUpInput:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  services.UpdateAddressInput:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      postal_code:
+        type: string
+      state:
+        type: string
+      street:
+        type: string
+    type: object
+  services.UpdateCartInput:
+    properties:
+      quantity:
+        minimum: 1
+        type: integer
+    required:
+    - quantity
+    type: object
+  services.UpdateProductInput:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+    type: object
+  utils.AppError:
+    properties:
+      code:
+        $ref: '#/definitions/utils.ErrorCode'
+      message:
+        type: string
+    type: object
+  utils.ErrorCode:
+    enum:
+    - email_taken
+    - invalid_email
+    - password_weak
+    - user_not_found
+    - invalid_credentials
+    - database_error
+    - validation_error
+    type: string
+    x-enum-varnames:
+    - ErrEmailTaken
+    - ErrEmailInvalid
+    - ErrPasswordWeak
+    - ErrUserNotFound
+    - ErrInvalidCreds
+    - ErrDatabaseError
+    - ErrValidation
+  utils.Meta:
+    properties:
+      count:
+        type: integer
+      currentPage:
+        type: integer
+      itemsPerPage:
+        type: integer
+      totalItems:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  utils.PaginateResult-models_Product:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.Product'
+        type: array
+      meta:
+        $ref: '#/definitions/utils.Meta'
+    type: object
+host: localhost:3004
+info:
+  contact: {}
+  description: Complete e-commerce API with user authentication, products, cart, and
+    address management
+  title: E-Commerce API
+  version: "1.0"
+paths:
+  /addresses:
+    get:
+      description: Retrieve all addresses associated with the user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Address'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Get user's addresses
+      tags:
+      - addresses
+    post:
+      consumes:
+      - application/json
+      description: Add a new address to the user's profile
+      parameters:
+      - description: Address details
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/services.CreateAddressInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Address'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Create a new address
+      tags:
+      - addresses
+  /addresses/{id}:
+    delete:
+      description: Remove an address from the user's profile
+      parameters:
+      - description: Address ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Delete address
+      tags:
+      - addresses
+    get:
+      description: Retrieve a specific address by its UUID
+      parameters:
+      - description: Address ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Address'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Get address by ID
+      tags:
+      - addresses
+    put:
+      consumes:
+      - application/json
+      description: Update details of an existing address
+      parameters:
+      - description: Address ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Address updates
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/services.UpdateAddressInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Address'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Update address
+      tags:
+      - addresses
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return access/refresh tokens
+      parameters:
+      - description: Login credentials
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/services.SignInInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.SignInResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      summary: Login user
+      tags:
+      - auth
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with email and password
+      parameters:
+      - description: Signup credentials
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/services.SignUpInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/services.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      summary: Register a new user
+      tags:
+      - auth
+  /cart:
+    delete:
+      description: Remove all items from the user's shopping cart
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Clear cart
+      tags:
+      - cart
+    get:
+      description: Retrieve all items in the user's shopping cart
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Cart'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Get user's cart
+      tags:
+      - cart
+    post:
+      consumes:
+      - application/json
+      description: Add a product to the user's shopping cart
+      parameters:
+      - description: Product and quantity
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/services.AddToCartInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Cart'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Add item to cart
+      tags:
+      - cart
+  /cart/{id}:
+    delete:
+      description: Delete a specific item from the user's cart
+      parameters:
+      - description: Cart item ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Remove item from cart
+      tags:
+      - cart
+    put:
+      consumes:
+      - application/json
+      description: Update the quantity of an item in the cart
+      parameters:
+      - description: Cart item ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated quantity
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/services.UpdateCartInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Cart'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Update cart item
+      tags:
+      - cart
+  /products:
+    get:
+      description: Retrieve all products with pagination support
+      parameters:
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.PaginateResult-models_Product'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      summary: Get all products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Add a new product to the catalog
+      parameters:
+      - description: Product details
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/services.CreateProductInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Create a new product
+      tags:
+      - products
+  /products/{id}:
+    delete:
+      description: Remove a product from catalog
+      parameters:
+      - description: Product ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Delete a product
+      tags:
+      - products
+    get:
+      description: Retrieve a single product by its UUID
+      parameters:
+      - description: Product ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Product'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      summary: Get product by ID
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      description: Update product details
+      parameters:
+      - description: Product ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product updates
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/services.UpdateProductInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.AppError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      security:
+      - BearerAuth: []
+      summary: Update a product
+      tags:
+      - products
+  /products/name/{name}:
+    get:
+      description: Retrieve a single product by its name
+      parameters:
+      - description: Product name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Product'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.AppError'
+      summary: Get product by name
+      tags:
+      - products
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
