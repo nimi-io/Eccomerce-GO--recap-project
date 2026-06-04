@@ -10,9 +10,9 @@ import (
 	"Eccomerce-GO--recap-project-/models"
 )
 type Claims struct {
-    UserID uint   `json:"user_id"`
-    Email  string `json:"email"`
-    jwt.RegisteredClaims
+	UserID string `json:"user_id"`
+	Email  string `json:"email"`
+	jwt.RegisteredClaims
 }
 
 func GenerateToken(user *models.User, tokenType string) (string, error) {
@@ -32,7 +32,7 @@ func GenerateToken(user *models.User, tokenType string) (string, error) {
 
 	claims := jwt.MapClaims{
 		"sub":     subject,
-		"user_id": user.ID,
+		"user_id": user.ID.String(),
 		"exp":     expirationTime.Unix(),
 		"iat":     time.Now().Unix(),
 	}
