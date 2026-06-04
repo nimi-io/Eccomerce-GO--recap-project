@@ -2,5 +2,6 @@
 .qodo/
 .env
 gin_access.log
-docs/
+# docs/
 tmp/
+.claude/
