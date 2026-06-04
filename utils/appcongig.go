@@ -74,7 +74,9 @@ func init() {
 
 	AppConfig.SECRET_KEY = os.Getenv("SECRET_KEY")
 	if AppConfig.SECRET_KEY == "" {
-		AppConfig.SECRET_KEY = "your-secret-key-here"
-		log.Println("Warning: SECRET_KEY not set, using default (not recommended for production)")
+		log.Fatal("FATAL: SECRET_KEY environment variable not set. This is required for token signing.")
+	}
+	if len(AppConfig.SECRET_KEY) < 32 {
+		log.Fatal("FATAL: SECRET_KEY must be at least 32 characters long for security")
 	}
 }
