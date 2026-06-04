@@ -41,37 +41,40 @@ type AuthResponse struct {
 }
 
 func (s *AuthService) SignUp(ctx context.Context, input *SignUpInput) (*AuthResponse, error) {
+	if ctx == nil {
+		return nil, utils.ValidationError("request context cannot be nil")
+	}
 	if input == nil {
-		return nil, errors.New("signup input cannot be nil")
+		return nil, utils.ValidationError("signup input cannot be nil")
 	}
 
 	input.Email = strings.TrimSpace(strings.ToLower(input.Email))
 	if input.Email == "" {
-		return nil, errors.New("email is required")
+		return nil, utils.InvalidEmailError()
 	}
 
 	input.Name = strings.TrimSpace(input.Name)
 	if input.Name == "" {
-		return nil, errors.New("name is required")
+		return nil, utils.ValidationError("name is required")
 	}
 
 	if len(input.Password) < 8 {
-		return nil, errors.New("password must be at least 8 characters")
+		return nil, utils.PasswordWeakError()
 	}
 
 	// Check if user already exists
 	existing, err := s.userRepo.FindOne(ctx, map[string]any{"email": input.Email})
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, errors.New("failed to verify existing user")
+		return nil, utils.DatabaseError()
 	}
 	if existing != nil {
-		return nil, errors.New("user already exists with that email")
+		return nil, utils.EmailTakenError()
 	}
 
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, errors.New("failed to hash password")
+		return nil, utils.DatabaseError()
 	}
 
 	// Create user
@@ -89,18 +92,18 @@ func (s *AuthService) SignUp(ctx context.Context, input *SignUpInput) (*AuthResp
 
 	createdUser, err := s.userRepo.Create(ctx, user)
 	if err != nil {
-		return nil, errors.New("failed to create user")
+		return nil, utils.DatabaseError()
 	}
 
 	// Generate access token
 	accessToken, err := utils.GenerateToken(createdUser, "access")
 	if err != nil {
-		return nil, errors.New("failed to generate access token")
+		return nil, utils.DatabaseError()
 	}
 
-	refreshToken, err := utils.GenerateToken(createdUser,"refresh")
+	refreshToken, err := utils.GenerateToken(createdUser, "refresh")
 	if err != nil {
-		return nil, errors.New("failed to generate refresh token")
+		return nil, utils.DatabaseError()
 	}
 
 	return &AuthResponse{
@@ -135,39 +138,42 @@ type SignInResponse struct {
 }
 
 func (s *AuthService) SignIn(ctx context.Context, input *SignInInput) (*SignInResponse, error) {
+	if ctx == nil {
+		return nil, utils.ValidationError("request context cannot be nil")
+	}
 	if input == nil {
-		return nil, errors.New("signin input cannot be nil")
+		return nil, utils.ValidationError("signin input cannot be nil")
 	}
 
 	input.Email = strings.TrimSpace(strings.ToLower(input.Email))
 	if input.Email == "" {
-		return nil, errors.New("email is required")
+		return nil, utils.InvalidEmailError()
 	}
 
 	if input.Password == "" {
-		return nil, errors.New("password is required")
+		return nil, utils.ValidationError("password is required")
 	}
 
 	user, err := s.userRepo.FindByEmail(ctx, input.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("invalid email or password")
+			return nil, utils.InvalidCredentialsError()
 		}
-		return nil, errors.New("failed to retrieve user")
+		return nil, utils.DatabaseError()
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
 	if err != nil {
-		return nil, errors.New("invalid email or password")
+		return nil, utils.InvalidCredentialsError()
 	}
 
 	accessToken, err := utils.GenerateToken(user, "access")
 	if err != nil {
-		return nil, errors.New("failed to generate access token")
+		return nil, utils.DatabaseError()
 	}
 	refreshToken, err := utils.GenerateToken(user, "refresh")
 	if err != nil {
-		return nil, errors.New("failed to generate refresh token")
+		return nil, utils.DatabaseError()
 	}
 
 	return &SignInResponse{
